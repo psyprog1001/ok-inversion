@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig(() => ({
+  base: './', // Ensures assets are loaded correctly on GitHub Pages and local folders
   server: {
     host: "::",
     port: 8080,
