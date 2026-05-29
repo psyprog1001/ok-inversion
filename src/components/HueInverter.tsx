@@ -71,7 +71,8 @@ const HueInverter = ({ file, onReset }: HueInverterProps) => {
     }
 
     ctx.putImageData(imageData, 0, 0);
-    setProcessedUrl(canvas.toDataURL(file.type));
+    // Use 1.0 quality for formats that support it (JPEG/WebP) to minimize compression loss
+    setProcessedUrl(canvas.toDataURL(file.type, 1.0));
     setIsProcessing(false);
     showSuccess("Image processed successfully!");
   };
