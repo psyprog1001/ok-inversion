@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig(() => ({
-  base: './', // Ensures assets are linked relatively for offline/static use
   server: {
     host: "::",
     port: 8080,
