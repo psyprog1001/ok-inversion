@@ -40,6 +40,30 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.code === 'Space') {
+        e.preventDefault();
+        setShowOriginal(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === 'Control') {
+        setShowOriginal(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
   const processImage = (img: HTMLImageElement) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -144,6 +168,7 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
             onMouseLeave={() => setShowOriginal(false)}
             onTouchStart={() => setShowOriginal(true)}
             onTouchEnd={() => setShowOriginal(false)}
+            title="Hold Ctrl + Spacebar to compare"
           >
             {showOriginal ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
             Hold to Compare
@@ -177,7 +202,6 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
               onMouseLeave={() => setShowOriginal(false)}
             />
             
-            {/* Drag Overlay - pointer-events-none is key to prevent flickering */}
             {isDragging && (
               <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200 pointer-events-none">
                 <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-xl">
