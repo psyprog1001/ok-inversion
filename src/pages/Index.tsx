@@ -51,6 +51,7 @@ const Index = () => {
               <HueInverter 
                 file={selectedFile} 
                 onReset={() => setSelectedFile(null)} 
+                onImageUpload={setSelectedFile}
               />
             </div>
           )}

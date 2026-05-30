@@ -1,25 +1,29 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { rgbToOklab, gamutMap, linearToSrgbUint8 } from '@/utils/color-space';
 import { Button } from '@/components/ui/button';
-import { Download, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Download, RefreshCw, Eye, EyeOff, Upload } from 'lucide-react';
 import { showSuccess, showError } from '@/utils/toast';
+import { cn } from '@/lib/utils';
 
 interface HueInverterProps {
   file: File;
   onReset: () => void;
+  onImageUpload: (file: File) => void;
 }
 
-const HueInverter = ({ file, onReset }: HueInverterProps) => {
+const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
   const [isProcessing, setIsProcessing] = useState(true);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [originalUrl, setOriginalUrl] = useState<string>('');
   const [processedUrl, setProcessedUrl] = useState<string>('');
   
   useEffect(() => {
     const url = URL.createObjectURL(file);
     setOriginalUrl(url);
+    setIsProcessing(true);
 
     const img = new Image();
     img.onload = () => {
@@ -75,8 +79,31 @@ const HueInverter = ({ file, onReset }: HueInverterProps) => {
     link.click();
   };
 
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile && droppedFile.type.startsWith('image/')) {
+      onImageUpload(droppedFile);
+    }
+  }, [onImageUpload]);
+
   return (
-    <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+    <div 
+      className="flex flex-col gap-6 w-full max-w-4xl mx-auto"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <div className="flex items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={onReset} className="text-white border-white/20 hover:bg-white/10">
@@ -108,7 +135,10 @@ const HueInverter = ({ file, onReset }: HueInverterProps) => {
         </div>
       </div>
 
-      <div className="relative aspect-auto min-h-[300px] rounded-2xl overflow-hidden border-4 border-card shadow-2xl bg-black/20 flex items-center justify-center group">
+      <div className={cn(
+        "relative aspect-auto min-h-[300px] rounded-2xl overflow-hidden border-4 shadow-2xl bg-black/20 flex items-center justify-center group transition-all duration-200",
+        isDragging ? "border-primary scale-[1.02] bg-primary/5" : "border-card"
+      )}>
         {isProcessing ? (
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
@@ -126,6 +156,17 @@ const HueInverter = ({ file, onReset }: HueInverterProps) => {
               onMouseUp={() => setShowOriginal(false)}
               onMouseLeave={() => setShowOriginal(false)}
             />
+            
+            {/* Drag Overlay */}
+            {isDragging && (
+              <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200">
+                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-xl">
+                  <Upload className="w-8 h-8 text-primary-foreground" />
+                </div>
+                <p className="text-xl font-bold text-white">Drop to load new image</p>
+              </div>
+            )}
+
             <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-medium pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
               {showOriginal ? 'Original' : 'OKLab Inverted'}
             </div>
