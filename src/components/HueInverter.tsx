@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { rgbToOklab, gamutMap, linearToSrgbUint8 } from '@/utils/color-space';
 import { Button } from '@/components/ui/button';
 import { Download, RefreshCw, Eye, EyeOff, Upload } from 'lucide-react';
@@ -19,6 +19,8 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [originalUrl, setOriginalUrl] = useState<string>('');
   const [processedUrl, setProcessedUrl] = useState<string>('');
+  
+  const dragCounter = useRef(0);
   
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -79,18 +81,35 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
     link.click();
   };
 
-  const onDragOver = (e: React.DragEvent) => {
+  const onDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
+    e.stopPropagation();
+    dragCounter.current++;
+    if (dragCounter.current === 1) {
+      setIsDragging(true);
+    }
   };
 
-  const onDragLeave = () => {
-    setIsDragging(false);
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
+    dragCounter.current = 0;
+    
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile && droppedFile.type.startsWith('image/')) {
       onImageUpload(droppedFile);
@@ -100,8 +119,9 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
   return (
     <div 
       className="flex flex-col gap-6 w-full max-w-4xl mx-auto"
-      onDragOver={onDragOver}
+      onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
       onDrop={onDrop}
     >
       <div className="flex items-center justify-between bg-card p-4 rounded-xl border shadow-sm">
@@ -137,7 +157,7 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
 
       <div className={cn(
         "relative aspect-auto min-h-[300px] rounded-2xl overflow-hidden border-4 shadow-2xl bg-black/20 flex items-center justify-center group transition-all duration-200",
-        isDragging ? "border-primary scale-[1.02] bg-primary/5" : "border-card"
+        isDragging ? "border-primary scale-[1.01] bg-primary/5" : "border-card"
       )}>
         {isProcessing ? (
           <div className="flex flex-col items-center gap-4">
@@ -157,9 +177,9 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
               onMouseLeave={() => setShowOriginal(false)}
             />
             
-            {/* Drag Overlay */}
+            {/* Drag Overlay - pointer-events-none is key to prevent flickering */}
             {isDragging && (
-              <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200">
+              <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200 pointer-events-none">
                 <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-xl">
                   <Upload className="w-8 h-8 text-primary-foreground" />
                 </div>
