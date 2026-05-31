@@ -43,14 +43,19 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
   // Keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.code === 'Space') {
-        e.preventDefault();
+      // Only trigger if not typing in an input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault(); // Prevent page scrolling
         setShowOriginal(true);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === 'Control') {
+      if (e.code === 'Space') {
         setShowOriginal(false);
       }
     };
@@ -168,7 +173,7 @@ const HueInverter = ({ file, onReset, onImageUpload }: HueInverterProps) => {
             onMouseLeave={() => setShowOriginal(false)}
             onTouchStart={() => setShowOriginal(true)}
             onTouchEnd={() => setShowOriginal(false)}
-            title="Hold Ctrl + Spacebar to compare"
+            title="Hold Spacebar to compare"
           >
             {showOriginal ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
             Hold to Compare
